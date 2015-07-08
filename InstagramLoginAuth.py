@@ -10,7 +10,8 @@ from tornado.auth import _auth_return_future
 from tornado import escape
 import functools
 
-class DoubanMixin(object):
+
+class InstagramMixin(object):
     @return_future
     def authorize_redirect(self, redirect_uri=None, client_id=None,
                            client_secret=None, extra_params=None,
@@ -24,7 +25,7 @@ class DoubanMixin(object):
             args['scope'] = ' '.join(scope)
 
         self.redirect(
-            tornado.httputil.url_concat(self._OAUTH_AUTHORIZE_URL, args))   #跳转到认证页面
+            tornado.httputil.url_concat(self._OAUTH_AUTHORIZE_URL, args))   # Jump to auth page
         callback()
 
     def _oauth_request_token_url(self, redirect_uri=None, client_id=None, client_secret=None, code=None):
@@ -38,9 +39,10 @@ class DoubanMixin(object):
         )
         return tornado.httputil.url_concat(url, args)
 
-class DoubanOAuth2Mixin(DoubanMixin):
-    _OAUTH_ACCESS_TOKEN_URL = 'https://www.douban.com/service/auth2/token'
-    _OAUTH_AUTHORIZE_URL = 'https://www.douban.com/service/auth2/auth?'
+class InstagramOAuth2Mixin(InstagramMixin):
+    _OAUTH_ACCESS_TOKEN_URL = "https://api.instagram.com/oauth/access_token"
+    _OAUTH_AUTHORIZE_URL = "https://api.instagram.com/oauth/authorize/"
+    _OAUTH_VERSION = "2.0"
 
     def get_auth_http_client(self):
         return tornado.httpclient.AsyncHTTPClient()
@@ -51,8 +53,8 @@ class DoubanOAuth2Mixin(DoubanMixin):
         body = urllib.urlencode({
             'redirect_uri': redirect_uri,
             'code': code,
-            'client_id': self.settings['douban_api_key'],
-            'client_secret': self.settings['douban_api_secret'],
+            'client_id': self.settings['instagram_client_id'],
+            'client_secret': self.settings['instagram_client_secret'],
             "grant_type": "authorization_code",
             })
 
@@ -61,29 +63,7 @@ class DoubanOAuth2Mixin(DoubanMixin):
 
     def _on_access_token(self, future, response):
         if response.error:
-            future.set_exception(AuthError('Douban Auth Error: %s' % str(response)))
+            future.set_exception(AuthError('Instagram Auth Error: %s' % str(response)))
             return
         args = escape.json_decode(response.body)
-        # future.set_result(args)
-        self.get_user_info(access_token=args['access_token'],
-                           callback=functools.partial(self._on_get_user_info, future))
-
-    def _on_get_user_info(self, future, user):
-        if user is None:
-            future.set_result(None)
-            return
-        future.set_result(user)
-
-    @_auth_return_future
-    def get_user_info(self, access_token, callback):
-        url = 'https://api.douban.com/v2/user/~me'
-        http = tornado.httpclient.AsyncHTTPClient()
-        req = tornado.httpclient.HTTPRequest(url, headers={"Authorization":"Bearer " + access_token})
-        http.fetch(req, functools.partial(self._on_get_user_request, callback))
-
-    def _on_get_user_request(self, future, response):
-        if response.error:
-            future.set_exception(AuthError('Error response fetching',
-                                           response.error, response.request.url))
-            return
-        future.set_result(escape.json_decode(response.body))
+        future.set_result(args)
