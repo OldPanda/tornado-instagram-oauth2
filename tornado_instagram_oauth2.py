@@ -24,7 +24,12 @@ class Application(tornado.web.Application):
             static_path=os.path.join(os.path.dirname(__file__), "static"),
             instagram_client_id='FILL IN YOUR CLIENT ID',
             instagram_client_secret='FILL IN YOUR CLIENT SECRET',
-            redirect_uri='FILL IN YOUR REDIRECT URI',
+            redirect_uri='FILL IN YOUR REDIRECT URI',  # in this program, redirect_uri should be the
+                                                       # '/auth/instagram', since class AuthLoginHandler
+                                                       # handles
+                                                       #     * Step One: Direct your user to our authorization URL
+                                                       #     * Step Two: Receive the redirect from Instagram
+                                                       # in one 'get(self)' method.
             login_url="/auth/instagram",
             cookie_secret="FILL IN YOUR COOKIE SECRET",
             xsrf_cookies=True,
