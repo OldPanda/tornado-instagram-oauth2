@@ -51,13 +51,13 @@ class AuthLoginHandler(InstagramOAuth2Mixin, tornado.web.RequestHandler):
     @tornado.gen.coroutine
     def get(self):
         if self.get_argument('code', False):
-            user = yield self.get_authenticated_user(
+            token = yield self.get_authenticated_user(
                 redirect_uri=self.settings['redirect_uri'],
                 code=self.get_argument('code')
             )
-            if user:
+            if token:
                 self.set_secure_cookie("user_id", "ilovewilbeibi~~~")
-                self.application.user_info["user"] = user["user"]
+                self.application.user_info["user"] = token["user"]
                 #self.redirect(self.get_argument("next", "/"))
                 self.redirect("/")
         else:
